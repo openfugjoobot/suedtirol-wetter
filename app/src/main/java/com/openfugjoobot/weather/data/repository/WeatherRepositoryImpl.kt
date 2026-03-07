@@ -72,7 +72,7 @@ class WeatherRepositoryImpl @Inject constructor() : WeatherRepository {
                         // Convert to domain model
                         val forecast = convertToDomain(finalForecast)
                         cachedForecast = forecast
-                        lastFetched = now
+                        lastFetched = LocalDateTime.now()
                         
                         emit(forecast)
                         return@flow

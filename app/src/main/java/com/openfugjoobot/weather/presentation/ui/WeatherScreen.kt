@@ -21,8 +21,8 @@ fun WeatherScreen(
     
     LaunchedEffect(tapCount) {
         if (tapCount >= 2) {
-            // Double tap detected - force refresh
-            viewModel.refreshWeather()
+            // Double tap detected - force reload
+            viewModel.loadWeather()
             tapCount = 0
         }
     }
