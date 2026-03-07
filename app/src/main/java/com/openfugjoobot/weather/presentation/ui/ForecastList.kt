@@ -1,8 +1,6 @@
 package com.openfugjoobot.weather.presentation.ui
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -34,10 +32,11 @@ fun ForecastList(uiState: WeatherUiState) {
                     if (forecast.isEmpty()) {
                         Text("No forecast data available")
                     } else {
-                        LazyColumn(
+                        // Use regular Column instead of LazyColumn to avoid constraint issues
+                        Column(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            items(forecast) { day ->
+                            forecast.forEach { day ->
                                 ForecastItem(day)
                             }
                         }
