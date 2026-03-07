@@ -74,7 +74,7 @@ fun ForecastItem(day: ForecastDay) {
             style = MaterialTheme.typography.bodyMedium
         )
         Text(
-            text = "${day.temperature.maximum}° / ${day.temperature.minimum}°",
+            text = "${day.temperature.maximum ?: "--"}° / ${day.temperature.minimum ?: "--"}°",
             style = MaterialTheme.typography.bodySmall
         )
     }
