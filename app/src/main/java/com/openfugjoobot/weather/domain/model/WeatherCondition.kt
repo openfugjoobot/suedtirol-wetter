@@ -5,8 +5,8 @@ package com.openfugjoobot.weather.domain.model
  * Includes icon representation for UI.
  */
 data class WeatherCondition(
-    val description: String,
-    val iconCode: String,
+    val description: String?,  // Can be null if API doesn't provide it
+    val iconCode: String?,     // Can be null
     val type: ConditionType
 )
 
