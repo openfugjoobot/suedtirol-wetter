@@ -126,8 +126,8 @@ class WeatherRepositoryImpl @Inject constructor() : WeatherRepository {
         )
     }
     
-    private fun mapWeatherCode(code: String): ConditionType {
-        return when (code.lowercase()) {
+    private fun mapWeatherCode(code: String?): ConditionType {
+        return when (code?.lowercase()) {
             "a", "clear", "sunny" -> ConditionType.SUNNY
             "b", "partly_cloudy" -> ConditionType.PARTLY_CLOUDY
             "c", "d", "cloudy", "overcast" -> ConditionType.CLOUDY
