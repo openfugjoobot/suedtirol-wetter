@@ -70,7 +70,7 @@ fun ForecastItem(day: ForecastDay) {
             style = MaterialTheme.typography.bodyMedium
         )
         Text(
-            text = day.condition.description,
+            text = day.condition.description ?: "Unknown",
             style = MaterialTheme.typography.bodyMedium
         )
         Text(
