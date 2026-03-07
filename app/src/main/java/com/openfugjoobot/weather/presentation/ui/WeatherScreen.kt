@@ -3,8 +3,7 @@ package com.openfugjoobot.weather.presentation.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
@@ -37,6 +36,14 @@ fun WeatherScreen(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Version badge (DEBUG)
+            Text(
+                text = "⚠️ v2.0.5-DEBUG | CACHE: DISABLED",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+            
             // Add clickable wrapper with double-tap detection
             Box(
                 modifier = Modifier

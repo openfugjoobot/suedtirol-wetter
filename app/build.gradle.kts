@@ -13,8 +13,8 @@ android {
         applicationId = "com.openfugjoobot.weather"
         minSdk = 26  // Required for adaptive icons
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 5
+        versionName = "2.0.5-debug"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
