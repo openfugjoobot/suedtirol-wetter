@@ -22,9 +22,17 @@ class WeatherRepositoryImpl @Inject constructor() : WeatherRepository {
         var retryCount = 0
         val maxRetries = Config.MAX_NETWORK_RETRIES
         
+        // FORCE CACHE CLEAR on EVERY call (DEBUG/DEV MODE)
+        cachedForecast = null
+        lastFetched = null
+        android.util.Log.d("WEATHER_API", "⚠️ CACHE KILLED - fetching FRESH data from API!")
+        android.util.Log.d("WEATHER_API", "Requested station: $stationCode")
+        
         while (retryCount < maxRetries) {
             try {
-                // Check cache
+                // SKIP cache check in debug mode - always fetch
+                // Check cache (disabled for debugging)
+                /*
                 val now = LocalDateTime.now()
                 val cacheValid = lastFetched?.let {
                     java.time.Duration.between(it, now).toMinutes() < Config.CACHE_VALIDITY_MINUTES
@@ -34,6 +42,7 @@ class WeatherRepositoryImpl @Inject constructor() : WeatherRepository {
                     emit(cachedForecast!!)
                     return@flow
                 }
+                */
                 
                 // Fetch from API (returns ALL forecasts, filter by station code)
                 val response = ApiClient.weatherApiService.getWeatherForecast()
