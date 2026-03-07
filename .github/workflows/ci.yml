@@ -29,12 +29,12 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/build.gradle.kts') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Build debug APK (includes compile)
-        run: ./gradlew assembleDebug --stacktrace
+      - name: Clean and Build debug APK
+        run: ./gradlew clean assembleDebug --stacktrace
 
       - name: Run unit tests (optional - skip if no tests)
         run: ./gradlew test --stacktrace
