@@ -23,15 +23,17 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/build.gradle.kts') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      # - name: Cache Gradle packages  # DISABLED CACHE FOR EMERGENCY
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #       ~/.gradle/caches
+      #       ~/.gradle/wrapper
+      #     key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/build.gradle.kts') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-gradle-
+      - name: Force Fresh Build (no cache)
+        run: echo "Cache disabled for emergency build"
 
       - name: Clean and Build debug APK
         run: ./gradlew clean assembleDebug --stacktrace
