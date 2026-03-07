@@ -10,8 +10,8 @@ object ApiConstants {
     const val BASE_URL = "https://tourism.api.opendatahub.com"
     const val ENDPOINT_WEATHER_FORECAST = "/v1/Weather/Forecast"
     
-    // Neumarkt-Egna ISTAT code
-    const val DEFAULT_STATION_CODE = "021059"
+    // Neumarkt ISTAT code
+    const val DEFAULT_STATION_CODE = "021029"
     
     // Rate limiting
     const val RATE_LIMIT_REQUESTS = 10
