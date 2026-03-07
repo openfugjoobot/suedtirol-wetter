@@ -46,4 +46,3 @@ object ApiClient {
      */
     fun getCurrentTime(): Long = System.currentTimeMillis()
 }
-}
