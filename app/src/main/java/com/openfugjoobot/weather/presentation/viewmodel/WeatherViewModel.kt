@@ -2,7 +2,6 @@ package com.openfugjoobot.weather.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.openfugjoobot.weather.data.repository.WeatherRepositoryImpl
 import com.openfugjoobot.weather.domain.repository.WeatherRepository
 import com.openfugjoobot.weather.presentation.ui.WeatherEvent
 import com.openfugjoobot.weather.presentation.ui.WeatherUiState
@@ -15,7 +14,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class WeatherViewModel @Inject constructor(
-    private val repository: WeatherRepositoryImpl
+    private val repository: WeatherRepository
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow<WeatherUiState>(WeatherUiState.Idle)
