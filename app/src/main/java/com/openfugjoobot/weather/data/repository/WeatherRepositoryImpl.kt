@@ -40,14 +40,28 @@ class WeatherRepositoryImpl @Inject constructor() : WeatherRepository {
                 
                 val allForecasts = response.body()
                 if (response.isSuccessful && allForecasts != null) {
+                    // DEBUG: Log all available stations
+                    android.util.Log.d("WEATHER_API", "Received ${allForecasts.size} forecasts")
+                    if (android.util.Log.isLoggable("WEATHER_API", android.util.Log.DEBUG)) {
+                        allForecasts.forEach { f ->
+                            android.util.Log.d("WEATHER_API", "  - ${f.Shortname} (${f.MunicipalityIstatCode}): ${f.ForeCastDaily.firstOrNull()?.MaxTemp}°C")
+                        }
+                    }
+                    
                     // Filter by station code
                     val stationForecast = allForecasts.find { 
                         it.MunicipalityIstatCode == stationCode 
                     }
                     
-                    if (stationForecast != null) {
+                    // Fallback to first item if not found (for debugging)
+                    val finalForecast = stationForecast ?: run {
+                        android.util.Log.e("WEATHER_API", "Station $stationCode not found! Using first result: ${allForecasts.firstOrNull()?.Shortname}")
+                        allForecasts.firstOrNull()
+                    }
+                    
+                    if (finalForecast != null) {
                         // Convert to domain model
-                        val forecast = convertToDomain(stationForecast)
+                        val forecast = convertToDomain(finalForecast)
                         cachedForecast = forecast
                         lastFetched = now
                         
