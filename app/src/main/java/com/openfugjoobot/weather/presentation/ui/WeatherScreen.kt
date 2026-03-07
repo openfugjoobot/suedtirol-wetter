@@ -26,8 +26,7 @@ fun WeatherScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             CurrentWeatherCard(
-                uiState = uiState,
-                onRefresh = { } // TODO: Implement refresh
+                uiState = uiState
             )
             
             ForecastList(uiState = uiState)
