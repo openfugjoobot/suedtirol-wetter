@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.openfugjoobot.weather"
-        minSdk = 24
+        minSdk = 26  // Required for adaptive icons
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
