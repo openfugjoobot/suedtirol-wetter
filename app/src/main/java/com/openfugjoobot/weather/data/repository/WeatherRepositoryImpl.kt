@@ -1,14 +1,13 @@
 package com.openfugjoobot.weather.data.repository
 
 import com.openfugjoobot.weather.data.api.ApiClient
+import com.openfugjoobot.weather.data.api.ApiWeatherForecast
 import com.openfugjoobot.weather.domain.model.*
 import com.openfugjoobot.weather.domain.repository.WeatherRepository
+import com.openfugjoobot.weather.util.Config
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import java.time.Instant
-import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.ZoneId
 import javax.inject.Inject
 
 /**
@@ -18,40 +17,49 @@ class WeatherRepositoryImpl @Inject constructor() : WeatherRepository {
     
     private var lastFetched: LocalDateTime? = null
     private var cachedForecast: WeatherForecast? = null
-    private val cacheValidityMinutes = com.openfugjoobot.weather.util.Config.CACHE_VALIDITY_MINUTES
     
     override fun getWeatherForecast(stationCode: String): Flow<WeatherForecast> = flow {
         var retryCount = 0
-        val maxRetries = 3
+        val maxRetries = Config.MAX_NETWORK_RETRIES
         
         while (retryCount < maxRetries) {
             try {
                 // Check cache
                 val now = LocalDateTime.now()
                 val cacheValid = lastFetched?.let {
-                    java.time.Duration.between(it, now).toMinutes() < cacheValidityMinutes
+                    java.time.Duration.between(it, now).toMinutes() < Config.CACHE_VALIDITY_MINUTES
                 } ?: false
                 
-                if (cacheValid) {
-                    cachedForecast?.let { emit(it) }
+                if (cacheValid && cachedForecast != null) {
+                    emit(cachedForecast!!)
                     return@flow
                 }
                 
-                // Fetch from API
-                val response = ApiClient.weatherApiService.getWeatherForecast(stationCode)
+                // Fetch from API (returns ALL forecasts, filter by station code)
+                val response = ApiClient.weatherApiService.getWeatherForecast()
                 
-                val apiData = response.body()
-                if (response.isSuccessful && apiData != null) {
-                    // Convert to domain model
-                    val forecast = convertToDomain(apiData, stationCode)
-                    cachedForecast = forecast
-                    lastFetched = now
+                val allForecasts = response.body()
+                if (response.isSuccessful && allForecasts != null) {
+                    // Filter by station code
+                    val stationForecast = allForecasts.find { 
+                        it.MunicipalityIstatCode == stationCode 
+                    }
                     
-                    emit(forecast)
-                    return@flow
+                    if (stationForecast != null) {
+                        // Convert to domain model
+                        val forecast = convertToDomain(stationForecast)
+                        cachedForecast = forecast
+                        lastFetched = now
+                        
+                        emit(forecast)
+                        return@flow
+                    } else {
+                        throw Exception("No data found for station: $stationCode")
+                    }
                 } else {
                     // API error - try cache fallback
-                    cachedForecast?.let { emit(it) } ?: throw Exception("API error: ${response.code()}")
+                    cachedForecast?.let { emit(it) } 
+                        ?: throw Exception("API error: ${response.code()}")
                 }
             } catch (e: Exception) {
                 retryCount++
@@ -65,56 +73,68 @@ class WeatherRepositoryImpl @Inject constructor() : WeatherRepository {
         }
     }
     
-    private fun convertToDomain(apiData: com.openfugjoobot.weather.data.api.WeatherApiResponse, stationCode: String): WeatherForecast {
-        val data = apiData.data.firstOrNull() ?: throw Exception("No data")
+    private fun convertToDomain(apiData: ApiWeatherForecast): WeatherForecast {
+        // Get coordinates from GpsInfo or use defaults
+        val lat = apiData.GpsInfo?.Latitude ?: 0.0
+        val lon = apiData.GpsInfo?.Longitude ?: 0.0
+        val alt = apiData.GpsInfo?.Altitude ?: 0
         
+        // Get current day's forecast (first entry)
+        val todayForecast = apiData.ForeCastDaily.firstOrNull() 
+            ?: throw Exception("No forecast data available")
+        
+        // Map weather code to condition type
+        val conditionType = mapWeatherCode(todayForecast.WeatherCode)
+        
+        // Build domain model
         return WeatherForecast(
-            stationCode = stationCode,
-            stationName = data.sName,
+            stationCode = apiData.MunicipalityIstatCode,
+            stationName = apiData.Shortname,
             coordinates = Coordinates(
-                latitude = data.latitude,
-                longitude = data.longitude,
-                altitude = data.altitude
+                latitude = lat,
+                longitude = lon,
+                altitude = alt
             ),
             currentTemperature = Temperature(
-                current = data.temperature?.value
+                current = todayForecast.MinTemp.toDouble(), // Use min as "current" approximation
+                minimum = todayForecast.MinTemp.toDouble(),
+                maximum = todayForecast.MaxTemp.toDouble()
             ),
             currentCondition = WeatherCondition(
-                description = data.weatherCondition ?: "Unknown",
-                iconCode = data.weatherConditionType ?: "unknown",
-                type = mapToConditionType(data.weatherConditionType)
+                description = todayForecast.WeatherDesc,
+                iconCode = todayForecast.WeatherCode,
+                type = conditionType
             ),
-            forecast = apiData.data.map { apiEntry ->
+            forecast = apiData.ForeCastDaily.map { daily ->
                 ForecastDay(
-                    date = Instant.ofEpochSecond(apiEntry.epoch).atZone(ZoneId.systemDefault()).toLocalDate(),
+                    date = java.time.LocalDate.parse(daily.Date.split('T').first()),
                     temperature = Temperature(
-                        current = apiEntry.temperature?.value,
-                        minimum = apiEntry.temperature?.value, // API may not provide min/max
-                        maximum = apiEntry.temperature?.value
+                        minimum = daily.MinTemp.toDouble(),
+                        maximum = daily.MaxTemp.toDouble()
                     ),
                     condition = WeatherCondition(
-                        description = apiEntry.weatherCondition ?: "Unknown",
-                        iconCode = apiEntry.weatherConditionType ?: "unknown",
-                        type = mapToConditionType(apiEntry.weatherConditionType)
+                        description = daily.WeatherDesc,
+                        iconCode = daily.WeatherCode,
+                        type = mapWeatherCode(daily.WeatherCode)
                     ),
-                    humidity = null, // Not provided by API
+                    humidity = null,
                     windSpeed = null,
-                    precipitationProbability = null
+                    precipitationProbability = daily.SunshineDuration
                 )
             },
             lastUpdate = LocalDateTime.now()
         )
     }
     
-    private fun mapToConditionType(type: String?): ConditionType {
-        return when (type?.lowercase()) {
-            "clear", "sunny" -> ConditionType.SUNNY
-            "partly_cloudy", "partly cloudy" -> ConditionType.PARTLY_CLOUDY
-            "cloudy", "overcast" -> ConditionType.CLOUDY
-            "rain", "rainy" -> ConditionType.RAIN
-            "snow" -> ConditionType.SNOW
-            "storm", "thunderstorm" -> ConditionType.STORM
-            "fog", "mist" -> ConditionType.FOG
+    private fun mapWeatherCode(code: String): ConditionType {
+        return when (code.lowercase()) {
+            "a", "clear", "sunny" -> ConditionType.SUNNY
+            "b", "partly_cloudy" -> ConditionType.PARTLY_CLOUDY
+            "c", "d", "cloudy", "overcast" -> ConditionType.CLOUDY
+            "g", "h", "rain", "rainy", "drizzle" -> ConditionType.RAIN
+            "i", "snow" -> ConditionType.SNOW
+            "k", "t", "storm", "thunderstorm" -> ConditionType.STORM
+            "f", "fog", "mist" -> ConditionType.FOG
             else -> ConditionType.UNKNOWN
         }
     }

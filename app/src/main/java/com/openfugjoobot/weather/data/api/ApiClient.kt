@@ -40,4 +40,10 @@ object ApiClient {
     val weatherApiService: WeatherApiService by lazy {
         retrofit.create(WeatherApiService::class.java)
     }
+    
+    /**
+     * Get current time (for cache validation)
+     */
+    fun getCurrentTime(): Long = System.currentTimeMillis()
+}
 }
