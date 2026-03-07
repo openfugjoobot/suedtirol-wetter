@@ -40,8 +40,8 @@ class WeatherRepositoryImpl @Inject constructor() : WeatherRepository {
                 
                 android.util.Log.d("WEATHER_API", "⏳ Cache miss - fetching from API...")
                 
-                // Fetch from API (returns ALL forecasts, filter by station code)
-                val response = ApiClient.weatherApiService.getWeatherForecast()
+                // Fetch from API with istatCode parameter (CRITICAL FIX!)
+                val response = ApiClient.weatherApiService.getWeatherForecast(stationCode)
                 
                 val allForecasts = response.body()
                 if (response.isSuccessful && allForecasts != null) {

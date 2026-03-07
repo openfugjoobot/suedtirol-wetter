@@ -7,16 +7,21 @@ import retrofit2.http.GET
  * Retrofit service interface for OpenDataHub Tourism API v1
  * 
  * API: https://tourism.api.opendatahub.com/v1/Weather/Forecast
- * Returns list of all weather forecasts (filter by MunicipalityIstatCode client-side)
+ * IMPORTANT: Use ?istatCode= parameter (NOT stationid!)
+ * - Without param: returns ALL stations alphabetically (Badia first!)
+ * - With istatCode: returns only requested municipality
  */
 interface WeatherApiService {
     
     /**
-     * Get all weather forecasts
-     * Filter by station code in the repository layer
+     * Get weather forecast for specific municipality
+     * @param istatCode ISTAT code (e.g., "021029" for Neumarkt)
+     * MUST use "istatCode" param name (NOT "stationid")!
      */
     @GET(ApiConstants.ENDPOINT_WEATHER_FORECAST)
-    suspend fun getWeatherForecast(): Response<List<ApiWeatherForecast>>
+    suspend fun getWeatherForecast(
+        @Query("istatCode") istatCode: String
+    ): Response<List<ApiWeatherForecast>>
 }
 
 /**
