@@ -27,8 +27,8 @@ class WeatherRepositoryImpl : WeatherRepository {
             java.time.Duration.between(it, now).toMinutes() < cacheValidityMinutes
         } ?: false
         
-        if (cacheValid && cachedForecast != null) {
-            emit(cachedForecast!!)
+        if (cacheValid) {
+            cachedForecast?.let { emit(it) }
             return@flow
         }
         
@@ -36,9 +36,8 @@ class WeatherRepositoryImpl : WeatherRepository {
             // Fetch from API
             val response = ApiClient.weatherApiService.getWeatherForecast(stationCode)
             
-            if (response.isSuccessful && response.body() != null) {
-                val apiData = response.body()!!
-                
+            val apiData = response.body()
+            if (response.isSuccessful && apiData != null) {
                 // Convert to domain model
                 val forecast = convertToDomain(apiData, stationCode)
                 cachedForecast = forecast
@@ -47,19 +46,11 @@ class WeatherRepositoryImpl : WeatherRepository {
                 emit(forecast)
             } else {
                 // API error - try cache fallback
-                if (cachedForecast != null) {
-                    emit(cachedForecast!!)
-                } else {
-                    throw Exception("API error: ${response.code()}")
-                }
+                cachedForecast?.let { emit(it) } ?: throw Exception("API error: ${response.code()}")
             }
         } catch (e: Exception) {
             // Network error - try cache fallback
-            if (cachedForecast != null) {
-                emit(cachedForecast!!)
-            } else {
-                throw e
-            }
+            cachedForecast?.let { emit(it) } ?: throw e
         }
     }
     
@@ -82,7 +73,24 @@ class WeatherRepositoryImpl : WeatherRepository {
                 iconCode = data.weatherConditionType ?: "unknown",
                 type = mapToConditionType(data.weatherConditionType)
             ),
-            forecast = emptyList(), // Simplified - would map apiData.data to ForecastDay list
+            forecast = apiData.data.map { apiEntry ->
+                ForecastDay(
+                    date = Instant.ofEpochSecond(apiEntry.epoch).atZone(ZoneId.systemDefault()).toLocalDate(),
+                    temperature = Temperature(
+                        current = apiEntry.temperature?.value,
+                        minimum = apiEntry.temperature?.value, // API may not provide min/max
+                        maximum = apiEntry.temperature?.value
+                    ),
+                    condition = WeatherCondition(
+                        description = apiEntry.weatherCondition ?: "Unknown",
+                        iconCode = apiEntry.weatherConditionType ?: "unknown",
+                        type = mapToConditionType(apiEntry.weatherConditionType)
+                    ),
+                    humidity = null, // Not provided by API
+                    windSpeed = null,
+                    precipitationProbability = null
+                )
+            },
             lastUpdate = LocalDateTime.now()
         )
     }
