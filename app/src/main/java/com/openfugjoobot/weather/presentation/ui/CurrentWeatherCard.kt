@@ -44,7 +44,7 @@ fun CurrentWeatherCard(
                         )
                     }
                     Text(
-                        text = uiState.forecast.currentCondition.description,
+                        text = uiState.forecast.currentCondition.description ?: "Keine Daten",
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
