@@ -9,11 +9,12 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
+import javax.inject.Inject
 
 /**
  * Repository implementation with caching
  */
-class WeatherRepositoryImpl : WeatherRepository {
+class WeatherRepositoryImpl @Inject constructor() : WeatherRepository {
     
     private var lastFetched: LocalDateTime? = null
     private var cachedForecast: WeatherForecast? = null
