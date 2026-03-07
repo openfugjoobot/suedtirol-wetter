@@ -1,0 +1,114 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Build release bundle (AAB)
+        run: ./gradlew bundleRelease --stacktrace
+
+      - name: Sign APK (if keystore available)
+        if: env.KEYSTORE_FILE != ''
+        env:
+          KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_FILE" | base64 --decode > keystore.jks
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=keystore.jks \
+            -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
+
+      - name: Extract APK info
+        id: apk_info
+        run: |
+          APK_VERSION=$(./gradlew -q printVersionName | tail -1 || echo ${{ steps.version.outputs.VERSION }})
+          APK_VERSION_CODE=$(./gradlew -q printVersionCode | tail -1 || echo "1")
+          echo "VERSION_NAME=$APK_VERSION" >> $GITHUB_OUTPUT
+          echo "VERSION_CODE=$APK_VERSION_CODE" >> $GITHUB_OUTPUT
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: app/build/outputs/apk/release/app-release.apk
+          retention-days: 90
+
+      - name: Upload release bundle (AAB)
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-bundle
+          path: app/build/outputs/bundle/release/app-release.aab
+          retention-days: 90
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Weather Dashboard ${{ steps.version.outputs.VERSION }}
+          body: |
+            ## Weather Dashboard ${{ steps.version.outputs.VERSION }}
+
+            📱 APKBuilt from commit: ${{ github.sha }}
+
+            ### Downloads
+            - `Weather-Dashboard-${{ steps.version.outputs.VERSION }}.apk` - Install directly on Android device
+            - `Weather-Dashboard-${{ steps.version.outputs.VERSION }}.aab` - For Play Store submission
+
+            ### What's Changed
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+
+            ---
+            **Release notes generated automatically by GitHub Actions**
+          files: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify deployment status
+        if: success()
+        run: |
+          echo "✅ Release ${{ steps.version.outputs.VERSION }} published successfully"
