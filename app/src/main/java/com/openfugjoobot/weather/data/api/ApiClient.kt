@@ -1,6 +1,5 @@
 package com.openfugjoobot.weather.data.api
 
-import android.os.Build
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -14,9 +13,10 @@ object ApiClient {
     
     private const val CONNECT_TIMEOUT = 30L
     private const val READ_TIMEOUT = 30L
+    private const val DEBUG = true // Set to false for production builds
     
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
+        level = if (DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
     }
     
     private val okHttpClient = OkHttpClient.Builder()
