@@ -1,7 +1,6 @@
 package com.openfugjoobot.weather.presentation.ui
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
@@ -19,23 +18,19 @@ fun WeatherScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize()
     ) { paddingValues ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item {
-                CurrentWeatherCard(
-                    uiState = uiState,
-                    onRefresh = { viewModel.onEvent(WeatherEvent.Refresh) }
-                )
-            }
-            item {
-                ForecastList(
-                    uiState = uiState
-                )
-            }
+            CurrentWeatherCard(
+                uiState = uiState,
+                onRefresh = { } // TODO: Implement refresh
+            )
+            
+            ForecastList(uiState = uiState)
         }
     }
 }

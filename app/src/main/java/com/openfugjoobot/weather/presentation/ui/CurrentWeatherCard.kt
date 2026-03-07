@@ -9,8 +9,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun CurrentWeatherCard(
-    uiState: WeatherUiState,
-    onRefresh: () -> Unit
+    uiState: WeatherUiState
 ) {
     Card(
         modifier = Modifier
