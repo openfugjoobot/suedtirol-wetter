@@ -22,27 +22,23 @@ class WeatherRepositoryImpl @Inject constructor() : WeatherRepository {
         var retryCount = 0
         val maxRetries = Config.MAX_NETWORK_RETRIES
         
-        // FORCE CACHE CLEAR on EVERY call (DEBUG/DEV MODE)
-        cachedForecast = null
-        lastFetched = null
-        android.util.Log.d("WEATHER_API", "⚠️ CACHE KILLED - fetching FRESH data from API!")
-        android.util.Log.d("WEATHER_API", "Requested station: $stationCode")
+        android.util.Log.d("WEATHER_API", "🔄 Requesting weather for station: $stationCode")
         
         while (retryCount < maxRetries) {
             try {
-                // SKIP cache check in debug mode - always fetch
-                // Check cache (disabled for debugging)
-                /*
+                // Check cache
                 val now = LocalDateTime.now()
                 val cacheValid = lastFetched?.let {
                     java.time.Duration.between(it, now).toMinutes() < Config.CACHE_VALIDITY_MINUTES
                 } ?: false
                 
                 if (cacheValid && cachedForecast != null) {
+                    android.util.Log.d("WEATHER_API", "✅ Cache hit - returning cached data (${java.time.Duration.between(lastFetched, now).toMinutes()} min old)")
                     emit(cachedForecast!!)
                     return@flow
                 }
-                */
+                
+                android.util.Log.d("WEATHER_API", "⏳ Cache miss - fetching from API...")
                 
                 // Fetch from API (returns ALL forecasts, filter by station code)
                 val response = ApiClient.weatherApiService.getWeatherForecast()
@@ -62,22 +58,26 @@ class WeatherRepositoryImpl @Inject constructor() : WeatherRepository {
                         it.MunicipalityIstatCode == stationCode 
                     }
                     
-                    // Fallback to first item if not found (for debugging)
-                    val finalForecast = stationForecast ?: run {
-                        android.util.Log.e("WEATHER_API", "Station $stationCode not found! Using first result: ${allForecasts.firstOrNull()?.Shortname}")
-                        allForecasts.firstOrNull()
-                    }
-                    
-                    if (finalForecast != null) {
+                    // Check if we found the requested station
+                    if (stationForecast != null) {
+                        android.util.Log.d("WEATHER_API", "✅ Found station: ${stationForecast.Shortname} (${stationForecast.MunicipalityIstatCode})")
+                        android.util.Log.d("WEATHER_API", "🌡️ Today's max temp: ${stationForecast.ForeCastDaily.firstOrNull()?.MaxTemp}°C")
+                        
                         // Convert to domain model
-                        val forecast = convertToDomain(finalForecast)
+                        val forecast = convertToDomain(stationForecast)
                         cachedForecast = forecast
                         lastFetched = LocalDateTime.now()
                         
                         emit(forecast)
                         return@flow
                     } else {
-                        throw Exception("No data found for station: $stationCode")
+                        // Station NOT found - log ALL available stations for debugging
+                        android.util.Log.e("WEATHER_API", "❌ Station $stationCode NOT FOUND!")
+                        android.util.Log.e("WEATHER_API", "Available stations:")
+                        allForecasts.forEach { f ->
+                            android.util.Log.e("WEATHER_API", "  - ${f.Shortname} (${f.MunicipalityIstatCode})")
+                        }
+                        throw Exception("Station $stationCode not found in API response. Available: ${allForecasts.size} stations")
                     }
                 } else {
                     // API error - try cache fallback

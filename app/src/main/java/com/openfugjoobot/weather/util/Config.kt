@@ -7,9 +7,8 @@ object Config {
     // Default station: Neumarkt (ISTAT 021029)
     const val DEFAULT_STATION_CODE = "021029"
     
-    // Cache duration in minutes (TEMPORARILY DISABLED FOR DEBUGGING)
-    // const val CACHE_VALIDITY_MINUTES = 30L
-    const val CACHE_VALIDITY_MINUTES = 0L  // Always fetch fresh data
+    // Cache duration in minutes
+    const val CACHE_VALIDITY_MINUTES = 30L  // Cache valid for 30 minutes
     
     // Network retry settings
     const val MAX_NETWORK_RETRIES = 3
