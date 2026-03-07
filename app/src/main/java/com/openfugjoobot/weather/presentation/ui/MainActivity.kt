@@ -22,10 +22,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val viewModel: WeatherViewModel = viewModel()
-                    WeatherScreen(
-                        viewModel = viewModel,
-                        stationCode = "021029" // Neumarkt Egna
-                    )
+                    WeatherScreen(viewModel = viewModel)
                 }
             }
         }

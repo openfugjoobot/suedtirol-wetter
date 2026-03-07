@@ -23,4 +23,10 @@ data class Coordinates(
     val latitude: Double,
     val longitude: Double,
     val altitude: Int? = null
-)
+) {
+    init {
+        require(latitude in -90.0..90.0) { "Invalid latitude: $latitude" }
+        require(longitude in -180.0..180.0) { "Invalid longitude: $longitude" }
+        altitude?.let { require(it in -500..9000) { "Invalid altitude: $it" } }
+    }
+}

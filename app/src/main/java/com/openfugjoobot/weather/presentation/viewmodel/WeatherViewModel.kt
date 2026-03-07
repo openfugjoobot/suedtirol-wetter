@@ -20,7 +20,7 @@ class WeatherViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<WeatherUiState>(WeatherUiState.Idle)
     val uiState: StateFlow<WeatherUiState> = _uiState.asStateFlow()
     
-    private val stationCode = MutableStateFlow("021029") // Neumarkt Egna
+    private val stationCode = MutableStateFlow(com.openfugjoobot.weather.util.Config.DEFAULT_STATION_CODE)
     
     init {
         loadWeather()

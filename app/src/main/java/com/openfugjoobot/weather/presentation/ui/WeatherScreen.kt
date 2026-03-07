@@ -12,7 +12,7 @@ import com.openfugjoobot.weather.presentation.viewmodel.WeatherViewModel
 @Composable
 fun WeatherScreen(
     viewModel: WeatherViewModel,
-    stationCode: String
+    stationCode: String = com.openfugjoobot.weather.util.Config.DEFAULT_STATION_CODE
 ) {
     val uiState by viewModel.uiState.collectAsState()
     

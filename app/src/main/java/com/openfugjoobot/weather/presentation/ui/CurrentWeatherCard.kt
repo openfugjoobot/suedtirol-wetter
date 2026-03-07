@@ -39,7 +39,7 @@ fun CurrentWeatherCard(
                     Spacer(modifier = Modifier.height(8.dp))
                     uiState.forecast.currentTemperature.current?.let { temp ->
                         Text(
-                            text = "%.1f°C".format(temp),
+                            text = String.format(java.util.Locale.getDefault(), "%.1f°C", temp),
                             style = MaterialTheme.typography.displayLarge
                         )
                     }

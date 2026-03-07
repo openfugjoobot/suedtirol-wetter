@@ -17,40 +17,50 @@ class WeatherRepositoryImpl : WeatherRepository {
     
     private var lastFetched: LocalDateTime? = null
     private var cachedForecast: WeatherForecast? = null
-    private val cacheValidityMinutes = 5
+    private val cacheValidityMinutes = com.openfugjoobot.weather.util.Config.CACHE_VALIDITY_MINUTES
     
     override fun getWeatherForecast(stationCode: String): Flow<WeatherForecast> = flow {
+        var retryCount = 0
+        val maxRetries = 3
         
-        // Check cache
-        val now = LocalDateTime.now()
-        val cacheValid = lastFetched?.let {
-            java.time.Duration.between(it, now).toMinutes() < cacheValidityMinutes
-        } ?: false
-        
-        if (cacheValid) {
-            cachedForecast?.let { emit(it) }
-            return@flow
-        }
-        
-        try {
-            // Fetch from API
-            val response = ApiClient.weatherApiService.getWeatherForecast(stationCode)
-            
-            val apiData = response.body()
-            if (response.isSuccessful && apiData != null) {
-                // Convert to domain model
-                val forecast = convertToDomain(apiData, stationCode)
-                cachedForecast = forecast
-                lastFetched = now
+        while (retryCount < maxRetries) {
+            try {
+                // Check cache
+                val now = LocalDateTime.now()
+                val cacheValid = lastFetched?.let {
+                    java.time.Duration.between(it, now).toMinutes() < cacheValidityMinutes
+                } ?: false
                 
-                emit(forecast)
-            } else {
-                // API error - try cache fallback
-                cachedForecast?.let { emit(it) } ?: throw Exception("API error: ${response.code()}")
+                if (cacheValid) {
+                    cachedForecast?.let { emit(it) }
+                    return@flow
+                }
+                
+                // Fetch from API
+                val response = ApiClient.weatherApiService.getWeatherForecast(stationCode)
+                
+                val apiData = response.body()
+                if (response.isSuccessful && apiData != null) {
+                    // Convert to domain model
+                    val forecast = convertToDomain(apiData, stationCode)
+                    cachedForecast = forecast
+                    lastFetched = now
+                    
+                    emit(forecast)
+                    return@flow
+                } else {
+                    // API error - try cache fallback
+                    cachedForecast?.let { emit(it) } ?: throw Exception("API error: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                retryCount++
+                if (retryCount >= maxRetries) {
+                    // All retries failed - try cache fallback
+                    cachedForecast?.let { emit(it) } ?: throw e
+                }
+                // Wait before retry (exponential backoff: 1s, 2s, 4s)
+                kotlinx.coroutines.delay(1000L * (1L shl retryCount))
             }
-        } catch (e: Exception) {
-            // Network error - try cache fallback
-            cachedForecast?.let { emit(it) } ?: throw e
         }
     }
     
