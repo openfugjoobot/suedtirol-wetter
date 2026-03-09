@@ -6,10 +6,14 @@
 2. **GitHub Issues** → Repos von `https://github.com/openfugjoobot/*` → P0/P1 Issues?
 3. **Git Status** → Uncommitted changes im Workspace?
 4. **Memory Maintenance** → `memory/heartbeat-state.json` aktuell?
-5. **Workflow Orchestrator** → `cd ~/.openclaw/skills/workflow-orchestrator && node bin/orchestrator.js check` → Advance phases?
-   - Bei 'advancing': Nächsten Phase-Spawn triggern
-   - Bei 'retry': Retry-Logic beachten (max 3 Versuche)
-   - Bei 'failed': User alerten
+5. **Workflow Orchestrator** → `cd ~/.openclaw/skills/workflow-orchestrator && node bin/orchestrator.js check` 
+
+**Output interpretieren:**
+- `"status": "running"` → Subagent läuft noch, nichts tun
+- `"status": "spawned"` → Nächste Phase wurde automatisch gespawn
+- `"status": "completed"` → Workflow fertig, User informieren
+- `"status": "spawn_failed"` oder `"failed"` → User alerten mit Error-Details
+- `"Workflow not running"` → Kein aktiver Workflow, überspringen
 
 ---
 
