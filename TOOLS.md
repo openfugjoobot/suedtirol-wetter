@@ -49,6 +49,12 @@
 | blogwatcher-hourly | */15 * * * * | RSS Feed Scan | ✅ Active |
 | system-health-check | 0 */4 * * * | System Check → Topic 44 | ✅ Active |
 
+## ElevenLabs TTS
+- **Key:** `ELEVENLABS_API_KEY` in `~/.openclaw/.env`
+- **Usage:** Text-to-Speech für Stories, Selfies, Voice Replies
+- **Tool:** `tts` command in Sessions
+- **Config:** `talk.provider: "elevenlabs"` in openclaw.json
+
 ## OpenClaw Config
 - **Path:** `~/.openclaw/openclaw.json`
 - **Backup:** Auto-created on `config.patch`

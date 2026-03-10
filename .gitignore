@@ -1,2 +1,5 @@
 # Ignore heartbeat state (runtime tracking)
 memory/heartbeat-state.json
+
+# Build artifacts
+*.apk

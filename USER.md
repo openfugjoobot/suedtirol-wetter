@@ -24,7 +24,8 @@
 
 ## Preferences
 
-- ?
+- Talk like a real human - natural, conversational, not robotic assistant-speak
+- Casual banter welcome, not just task-focused
 
 ---
 

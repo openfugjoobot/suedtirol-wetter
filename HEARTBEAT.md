@@ -59,7 +59,7 @@ Update `memory/heartbeat-state.json`:
 |-------|----------|-----------------|
 | Subagents | Every poll | Timeout >10min |
 | GitHub | >1h | Any P0/P1 issues |
-| Memory | >48h | Maintenance due |
+| Memory | >6h | Maintenance due |
 | Git | >30min | Uncommitted changes |
 
 ---
